@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "api-patterns": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "71d6f10cb23212c235a6bc454ed220e6d94d758622e9c3b75121c6d058969030"
+    },
+    "docker-expert": {
+      "source": "personamanagmentlayer/pcl",
+      "sourceType": "github",
+      "computedHash": "fe01be30b29e4fe819a7642919a993890ace47969d0d48b109bbd1d64216c09b"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9c87c315aed143ee3b34bec8117100f5035e0df09e6b23e1ecc772cff434c9ad"
+    },
+    "typescript-pro": {
+      "source": "404kidwiz/claude-supercode-skills",
+      "sourceType": "github",
+      "computedHash": "c54c092c539b4bc76a4c4a5a269a1fd59cddd5d87ae548307ffc97f11c7bd28a"
+    }
+  }
+}
