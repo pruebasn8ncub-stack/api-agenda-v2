@@ -60,6 +60,18 @@ export class AppointmentsService {
             throw new AppError('No se puede agendar en el pasado', 400, 'INVALID_TIME_RANGE');
         }
 
+        // Verify patient exists
+        const { data: patient, error: patientErr } = await supabase
+            .from('patients')
+            .select('id')
+            .eq('id', payload.patient_id)
+            .is('deleted_at', null)
+            .maybeSingle();
+
+        if (patientErr || !patient) {
+            throw new AppError('Paciente no encontrado', 404, 'PATIENT_NOT_FOUND');
+        }
+
         // Check existing scheduled appointment for this patient
         const { data: existingAppt } = await supabase
             .from('appointments')
