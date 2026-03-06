@@ -68,6 +68,7 @@ export class AvailabilityEngine {
             { data: rawExceptions },
             { data: allProfessionals },
             { data: allSchedules },
+            { data: allServices },
         ] = await Promise.all([
             supabase
                 .from('schedule_exceptions')
@@ -82,7 +83,7 @@ export class AvailabilityEngine {
                 .eq('is_active', true),
             supabase
                 .from('appointment_allocations')
-                .select('physical_resource_id, professional_id, starts_at, ends_at, service_phase_id, appointments!inner(status, services(required_professionals)), service_phases(requires_professional_fraction)')
+                .select('physical_resource_id, professional_id, starts_at, ends_at, service_phase_id, appointment_id, appointments!inner(status, service_id), service_phases(requires_professional_fraction)')
                 .lt('starts_at', dayEndIso)
                 .gt('ends_at', dayStartIso)
                 .neq('appointments.status', 'cancelled'),
@@ -99,20 +100,30 @@ export class AvailabilityEngine {
                 .from('professional_schedules')
                 .select('professional_id, start_time, end_time')
                 .eq('day_of_week', targetDayIndex),
+            supabase
+                .from('services')
+                .select('id, required_professionals'),
         ]);
 
+        // Build service fraction lookup
+        const svcFractionMap = new Map<string, number>();
+        for (const svc of (allServices ?? [])) {
+            svcFractionMap.set(svc.id, parseFloat(svc.required_professionals?.toString() ?? '1'));
+        }
+
         // Normalize allocations to include fraction
-        const allocations = (rawAllocations ?? []).map((a: any) => ({
-            physical_resource_id: a.physical_resource_id,
-            professional_id: a.professional_id,
-            starts_at: a.starts_at,
-            ends_at: a.ends_at,
-            fraction: parseFloat(
-                (a.service_phases?.requires_professional_fraction
-                    ?? a.appointments?.services?.required_professionals
-                    ?? 1).toString()
-            ),
-        }));
+        const allocations = (rawAllocations ?? []).map((a: any) => {
+            const phaseFrac = a.service_phases?.requires_professional_fraction;
+            const serviceId = a.appointments?.service_id;
+            const svcFrac = serviceId ? svcFractionMap.get(serviceId) : undefined;
+            return {
+                physical_resource_id: a.physical_resource_id,
+                professional_id: a.professional_id,
+                starts_at: a.starts_at,
+                ends_at: a.ends_at,
+                fraction: parseFloat((phaseFrac ?? svcFrac ?? 1).toString()),
+            };
+        });
 
         // Separate exceptions by type
         const exceptions = rawExceptions ?? [];
